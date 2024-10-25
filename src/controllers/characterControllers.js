@@ -114,7 +114,7 @@ export const updateCharacterAvatarController = async (req, res) => {
   } else {
     const localPath = path.resolve('src', 'uploads', 'avatars', req.file.filename);
       await fs.rename(req.file.path, localPath);
-      await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars${req.file.filename}`);
+      await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars/${req.file.filename}`);
   }
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded.' });

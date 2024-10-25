@@ -68,10 +68,6 @@ export const changeCharacterAvatar = async (userId, avatar) => {
     return Character.findByIdAndUpdate(userId, {avatarUrl: avatar});
 };
 
-// export const changeCharacterImages = async (userId, imgUrl) => {
-//     return Character.findByIdAndUpdate(userId, {imageUrl: imgUrl}, {new: true});
-// };
-
 export const deleteCharacter = async (id) => {
     const character = await Character.findById(id);
     if(!character) {
@@ -101,3 +97,5 @@ console.error('Error deleting avatar:', err.message);
     await Character.findByIdAndDelete(id);
     return {message: 'Character deleted successfully!'};
 };
+
+
