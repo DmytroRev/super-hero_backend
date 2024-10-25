@@ -9,7 +9,8 @@ import {
   getCharacterById,
   updateCharacter,
 } from '../service/characterService.js';
-import uploadToCloudinary from '../utils/uploadToCloudinary.js';
+import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
+
 
 //get all characters
 // export const getAllCharacters = async (req, res) => {
@@ -154,19 +155,19 @@ export const updateCharacterController = async (req, res) => {
 
 export const updateCharacterAvatarController = async (req, res) => {
 
-  if (Boolean(process.env.ENABLE_CLOUDINARY) === true) {
+  if (process.env.ENABLE_CLOUDINARY === 'true') {
     const response = await uploadToCloudinary(req.file.path);
     await fs.unlink(req.file.path);
-    console.log(response);
+    await changeCharacterAvatar(req.params.id, response.secure_url);
 
   } else {
-    await fs.file.path,
-      path.resolve('src', 'uploads', 'avatars', req.file.filename);
+    const localPath = path.resolve('src', 'uploads', 'avatars', req.file.filename);
+      await fs.rename(req.file.path, localPath);
+      await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars${req.file.filename}`);
   }
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded.' });
   }
-  await changeCharacterAvatar(req.params.id, req.file.filename);
   res.send({ status: 200, message: 'Avatar changed successfully!' });
 };
 

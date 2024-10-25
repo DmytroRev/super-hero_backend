@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import pino from 'pino-http';
 import cors from 'cors';
@@ -29,7 +30,7 @@ pino({
 );
 app.use(cors());
 
-app.use(express.static('public'));
+app.use(express.static(path.resolve('src', 'uploads')));
 
 app.use('/characters', characterRoutes);
 app.use('/character/photos', express.static(UPLOAD_DIR));

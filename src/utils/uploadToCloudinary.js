@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { CLOUDINARY } from '../constants.js';
+import { CLOUDINARY } from '../constants/index.js';
 
 cloudinary.config({
     cloud_name: CLOUDINARY.CLOUD_NAME,
@@ -11,4 +11,4 @@ function uploadToCloudinary(filePath) {
 return cloudinary.uploader.upload(filePath);
 };
 
-export default uploadToCloudinary;
+export {uploadToCloudinary};
