@@ -28,7 +28,7 @@ router.post(
 
 router.patch('/:id', jsonParser, ctrlWrapper(updateCharacterController));
 
-router.post('/:id/avatar',  upload.single('avatar'), jsonParser, ctrlWrapper(updateCharacterAvatarController));
+router.patch('/:id/avatar',  upload.single('avatar'), jsonParser, ctrlWrapper(updateCharacterAvatarController));
 
 router.delete('/:id/avatar', ctrlWrapper(removeCharacterAvatarController));
 
