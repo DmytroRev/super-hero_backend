@@ -1,9 +1,12 @@
 import express from 'express';
 import {
+  addCharacterImagesController,
   createCharacterController,
   deleteCharacterController,
   getAllCharactersController,
   getCharacterByIdController,
+  removeCharacterAvatarController,
+  removeCharacterImageController,
   updateCharacterAvatarController,
   updateCharacterController,
 } from '../controllers/characterControllers.js';
@@ -26,6 +29,14 @@ router.post(
 router.patch('/:id', jsonParser, ctrlWrapper(updateCharacterController));
 
 router.post('/:id/avatar',  upload.single('avatar'), jsonParser, ctrlWrapper(updateCharacterAvatarController));
+
+router.delete('/:id/avatar', ctrlWrapper(removeCharacterAvatarController));
+
+
+router.post('/:id/image', upload.array('images'), jsonParser, ctrlWrapper(addCharacterImagesController));
+
+
+router.delete('/:id/image', ctrlWrapper(removeCharacterImageController));
 
 router.delete('/:id', ctrlWrapper(deleteCharacterController));
 

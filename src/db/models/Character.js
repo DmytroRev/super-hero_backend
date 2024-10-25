@@ -8,7 +8,7 @@ const characterSchema = new mongoose.Schema(
     origin_description: { type: String, required: true },
     superpowers: { type: String, required: true },
     catch_phrase: { type: String, required: true },
-    imageUrl: { type: String },
+    imageUrl: { type: [String], default: [] },
   },
   {
     timestamps: true,

@@ -3,13 +3,6 @@ import { calculatePaginationData } from "../utils/calculatePaginationData.js";
 import path from 'path';
 import * as fs from 'fs/promises';
 
-// function changeCharacterAvatar(characterId, avatar) {
-//     return Character.findById(characterId, {avatarUrl: avatar});
-// }
-
-// export default changeCharacterAvatar;
-
-
 export const getAllCharacters = async ({page = 1, perPage = 5}) => {
 const limit = perPage;
 const skip = (page - 1) * perPage;
@@ -53,6 +46,13 @@ export const updateCharacter = async (id, data, file) => {
         await fs.rename(file.path, avatarPath);
     }
 
+    if(file) {
+        character.imagesUrl = `/uploads/avatars/${file.filename}`;
+
+        const avatarPath = path.resolve(('src', 'uploads', 'avatars', file.filename));
+        await fs.rename(file.path, avatarPath);
+    }
+
     character.nickname = data.nickname || character.nickname;
     character.real_name = data.real_name || character.real_name;
     character.origin_description = data.origin_description || character.origin_description;
@@ -68,6 +68,9 @@ export const changeCharacterAvatar = async (userId, avatar) => {
     return Character.findByIdAndUpdate(userId, {avatarUrl: avatar});
 };
 
+// export const changeCharacterImages = async (userId, imgUrl) => {
+//     return Character.findByIdAndUpdate(userId, {imageUrl: imgUrl}, {new: true});
+// };
 
 export const deleteCharacter = async (id) => {
     const character = await Character.findById(id);
@@ -84,6 +87,16 @@ console.error('Error deleting avatar:', err.message);
 
 }
     };
+
+    if(character.imagesUrl) {
+        const imagesPath = path.resolve('src', character.imagesUrl);
+        try {
+            await fs.unlink(imagesPath);
+        } catch (err) {
+        console.error('Error deleting images:', err.message);
+
+        }
+            };
 
     await Character.findByIdAndDelete(id);
     return {message: 'Character deleted successfully!'};

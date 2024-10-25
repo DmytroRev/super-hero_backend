@@ -3,35 +3,16 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import {
   changeCharacterAvatar,
-  //   changeCharacterAvatar,
+  // changeCharacterImages,
   deleteCharacter,
   getAllCharacters,
   getCharacterById,
   updateCharacter,
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
+import { changeCharacterImages, handleImageUpload } from '../service/characterImageService.js';
 
-
-//get all characters
-// export const getAllCharacters = async (req, res) => {
-//     try {
-//         const character = await Character.find();
-//         res.status(200).send(character);
-//     } catch (err) {
-// res.status(500).send({error: err.message});
-//     }
-// };
-
-//get character by id
-// export const getCharacterById = async (req, res) => {
-// try {
-//     const character = await Character.findById(req.params.id);
-//     if(!character) return res.status(404).send({error: 'Character not found'});
-//     res.status(200).send(character);
-// } catch (err) {
-// res.status(500).send({error: err.message});
-// }
-// };
+//get all character controller
 export const getAllCharactersController = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.perPage) || 5;
@@ -48,6 +29,8 @@ export const getAllCharactersController = async (req, res) => {
     res.status(500).send({ error: err.message });
   }
 };
+
+//get character by id controller
 export const getCharacterByIdController = async (req, res) => {
   try {
     const character = await getCharacterById(req.params.id);
@@ -64,34 +47,11 @@ export const getCharacterByIdController = async (req, res) => {
   }
 };
 
-//create a new character
-// export const createCharacter = async (req, res) => {
-//     console.log('Request body:', req.body);
-//     console.log('Uploaded file:', req.file);
-//     try {
-//         const characterData = {
-//             name: req.body.name,
-//             nickname: req.body.nickname,
-//             real_name: req.body.real_name,
-//             origin_description: req.body.origin_description,
-//             superpowers: req.body.superpowers,
-//             catch_phrase: req.body.catch_phrase,
-//             image: req.file ? `/images/${req.file.filename}` : null
-//         };
-// const character = new Character(characterData);
-// await character.save();
-// res.status(201).send(character);
-//         // const character = new Character(req.body);
-//         // await character.save();
-//         // res.status(201).send(character);
-//     } catch (err) {
-// res.status(400).send({error: err.message});
-//     }
-// };
-
+//create a new character controller
 export const createCharacterController = async (req, res) => {
   try {
     const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : null;
+    const imagesUrl = req.file ? `/uploads/images/${req.file.filename}` : null;
 
     const newCharacter = new Character({
       avatarUrl,
@@ -101,7 +61,7 @@ export const createCharacterController = async (req, res) => {
       origin_description: req.body.origin_description,
       superpowers: req.body.superpowers,
       catch_phrase: req.body.catch_phrase,
-      imageUrl: req.body.imageUrl || null,
+      imagesUrl
     });
     await newCharacter.save();
 
@@ -124,17 +84,7 @@ export const createCharacterController = async (req, res) => {
   }
 };
 
-//update character by id
-// export const updateCharacter = async (req, res) => {
-//     try {
-//         const character = await Character.findByIdAndUpdate(req.params.id, req.body, {new: true, runValidators: true});
-//         if(!character) return res.status(404).send({error: 'Character not found!'});
-//         res.status(200).send(character);
-//     } catch (err) {
-// res.status(400).send({error: err.message});
-//     }
-// };
-
+//update character by id controller
 export const updateCharacterController = async (req, res) => {
   const { id } = req.params;
 
@@ -153,6 +103,7 @@ export const updateCharacterController = async (req, res) => {
   }
 };
 
+//update character avatar controller
 export const updateCharacterAvatarController = async (req, res) => {
 
   if (process.env.ENABLE_CLOUDINARY === 'true') {
@@ -171,17 +122,71 @@ export const updateCharacterAvatarController = async (req, res) => {
   res.send({ status: 200, message: 'Avatar changed successfully!' });
 };
 
-//delete character
-// export const deleteCharacter = async (req, res) => {
-//     try {
-//         const character = await Character.findByIdAndDelete(req.params.id);
-//         if(!character) return res.status(404).send({error: 'Character not found!'});
-//         res.status(200).send(character);
-//     } catch (err) {
-// res.status(500).send({error: err.message});
-//     }
-// };
+const extractPublicId = (url) => {
+  const parts = url.split('/');
+  return parts[parts.length - 1].split('.')[0];
+};
 
+export const removeCharacterAvatarController = async (req, res) => {
+  try {
+    const character = await Character.findById(req.params.id);
+    if(!character) {
+return res.status(404).json({error: 'Character not found!'});
+    };
+
+    const avatarUrl = character.avatarUrl;
+
+    if(process.env.ENABLE_CLOUDINARY === 'true') {
+      const publicId = extractPublicId(avatarUrl);
+      await uploadToCloudinary(publicId);
+    } else {
+      const localPath = path.resolve('src', 'uploads', 'avatars', avatarUrl.split('/').pop());
+      await fs.unlink(localPath).catch(err => {
+        console.error(`Error deleting file ${err}`);
+      });
+    };
+    await Character.findByIdAndUpdate(req.params.id, {avatarUrl: null});
+    res.status(200).json({message: 'Avatar deleted successfully!'});
+  } catch (err) {
+res.status(500).json({error: err.message});
+  }
+};
+
+
+//add character images array controller
+export const addCharacterImagesController = async (req, res) => {
+  try {
+    if(!req.files || req.files.length === 0) {
+return res.status(400).json({error: 'No files uploaded'});
+    };
+
+    const imageUrls = await Promise.all(req.files.map(handleImageUpload));
+    await changeCharacterImages(req.params.id, imageUrls);
+    res.send({status: 200, message: 'Images added successfully!'});
+  } catch (err) {
+console.error(err);
+res.status(500).json({error: err.message});
+  }
+};
+
+//add delete image character controller
+export const removeCharacterImageController = async (req, res) => {
+try {
+  const {imagesUrl} = req.body;
+  const characterId =req.params.id;
+
+  await changeCharacterImages(characterId, imagesUrl, true);
+
+  res.send({status: 200, message: 'Image removed successfully!'});
+} catch (err) {
+console.error(err);
+res.status(500).json({error: err.message});
+
+}
+};
+
+
+//delete character controller
 export const deleteCharacterController = async (req, res) => {
   const { id } = req.params;
   try {
