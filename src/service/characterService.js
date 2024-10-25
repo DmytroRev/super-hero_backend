@@ -64,6 +64,10 @@ export const updateCharacter = async (id, data, file) => {
     return character;
 };
 
+export const changeCharacterAvatar = async (userId, avatar) => {
+    return Character.findByIdAndUpdate(userId, {avatarUrl: avatar});
+};
+
 
 export const deleteCharacter = async (id) => {
     const character = await Character.findById(id);
