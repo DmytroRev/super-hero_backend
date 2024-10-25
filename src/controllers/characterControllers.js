@@ -11,6 +11,7 @@ import {
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 import { changeCharacterImages, handleImageUpload } from '../service/characterImageService.js';
+import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
 export const getAllCharactersController = async (req, res) => {
@@ -105,22 +106,23 @@ export const updateCharacterController = async (req, res) => {
 
 //update character avatar controller
 export const updateCharacterAvatarController = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
 
   if (process.env.ENABLE_CLOUDINARY === 'true') {
     const response = await uploadToCloudinary(req.file.path);
     await fs.unlink(req.file.path);
     await changeCharacterAvatar(req.params.id, response.secure_url);
-
   } else {
-    const localPath = path.resolve('src', 'uploads', 'avatars', req.file.filename);
-      await fs.rename(req.file.path, localPath);
-      await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars/${req.file.filename}`);
+    const localPath = path.resolve(AVATAR_DIR, req.file.filename);
+    await fs.rename(req.file.path, localPath);
+    await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars/${req.file.filename}`);
   }
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded.' });
-  }
+
   res.send({ status: 200, message: 'Avatar changed successfully!' });
 };
+
 
 const extractPublicId = (url) => {
   const parts = url.split('/');
