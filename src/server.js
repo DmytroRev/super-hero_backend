@@ -2,7 +2,6 @@ import express from 'express';
 // import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import pino from 'pino-http';
-import cors from 'cors';
 import characterRoutes from './routes/characterRoutes.js';
 import { AVATAR_DIR, IMAGE_DIR } from './constants/index.js';
 // import { UPLOAD_DIR } from './constants/index.js';
@@ -29,7 +28,7 @@ pino({
     }
 })
 );
-app.use(cors());
+
 
 // app.use(express.static(path.resolve('src', 'uploads')));
 
