@@ -10,7 +10,10 @@ import {
   updateCharacter,
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
-import { changeCharacterImages, handleImageUpload } from '../service/characterImageService.js';
+import {
+  changeCharacterImages,
+  handleImageUpload,
+} from '../service/characterImageService.js';
 import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
@@ -62,7 +65,7 @@ export const createCharacterController = async (req, res) => {
       origin_description: req.body.origin_description,
       superpowers: req.body.superpowers,
       catch_phrase: req.body.catch_phrase,
-      imagesUrl
+      imagesUrl,
     });
     await newCharacter.save();
 
@@ -117,12 +120,18 @@ export const updateCharacterAvatarController = async (req, res) => {
   } else {
     const localPath = path.resolve(AVATAR_DIR, req.file.filename);
     await fs.rename(req.file.path, localPath);
-    await changeCharacterAvatar(req.params.id, `http://localhost:3000/avatars/${req.file.filename}`);
+    await changeCharacterAvatar(
+      req.params.id,
+      `http://localhost:3000/avatars/${req.file.filename}`,
+    );
   }
 
-  res.send({ status: 200, message: 'Avatar changed successfully!' });
+  res.send({
+    status: 200,
+    message: 'Avatar changed successfully!',
+    url: `http://localhost:3000/avatars/${req.file.filename}`,
+  });
 };
-
 
 const extractPublicId = (url) => {
   const parts = url.split('/');
@@ -132,61 +141,63 @@ const extractPublicId = (url) => {
 export const removeCharacterAvatarController = async (req, res) => {
   try {
     const character = await Character.findById(req.params.id);
-    if(!character) {
-return res.status(404).json({error: 'Character not found!'});
-    };
+    if (!character) {
+      return res.status(404).json({ error: 'Character not found!' });
+    }
 
     const avatarUrl = character.avatarUrl;
 
-    if(process.env.ENABLE_CLOUDINARY === 'true') {
+    if (process.env.ENABLE_CLOUDINARY === 'true') {
       const publicId = extractPublicId(avatarUrl);
       await uploadToCloudinary(publicId);
     } else {
-      const localPath = path.resolve('src', 'uploads', 'avatars', avatarUrl.split('/').pop());
-      await fs.unlink(localPath).catch(err => {
+      const localPath = path.resolve(
+        'src',
+        'uploads',
+        'avatars',
+        avatarUrl.split('/').pop(),
+      );
+      await fs.unlink(localPath).catch((err) => {
         console.error(`Error deleting file ${err}`);
       });
-    };
-    await Character.findByIdAndUpdate(req.params.id, {avatarUrl: null});
-    res.status(200).json({message: 'Avatar deleted successfully!'});
+    }
+    await Character.findByIdAndUpdate(req.params.id, { avatarUrl: null });
+    res.status(200).json({ message: 'Avatar deleted successfully!' });
   } catch (err) {
-res.status(500).json({error: err.message});
+    res.status(500).json({ error: err.message });
   }
 };
-
 
 //add character images array controller
 export const addCharacterImagesController = async (req, res) => {
   try {
-    if(!req.files || req.files.length === 0) {
-return res.status(400).json({error: 'No files uploaded'});
-    };
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
 
     const imageUrls = await Promise.all(req.files.map(handleImageUpload));
     await changeCharacterImages(req.params.id, imageUrls);
-    res.send({status: 200, message: 'Images added successfully!'});
+    res.send({ status: 200, message: 'Images added successfully!' });
   } catch (err) {
-console.error(err);
-res.status(500).json({error: err.message});
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
 };
 
 //add delete image character controller
 export const removeCharacterImageController = async (req, res) => {
-try {
-  const {imagesUrl} = req.body;
-  const characterId =req.params.id;
+  try {
+    const { imagesUrl } = req.body;
+    const characterId = req.params.id;
 
-  await changeCharacterImages(characterId, imagesUrl, true);
+    await changeCharacterImages(characterId, imagesUrl, true);
 
-  res.send({status: 200, message: 'Image removed successfully!'});
-} catch (err) {
-console.error(err);
-res.status(500).json({error: err.message});
-
-}
+    res.send({ status: 200, message: 'Image removed successfully!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 };
-
 
 //delete character controller
 export const deleteCharacterController = async (req, res) => {
