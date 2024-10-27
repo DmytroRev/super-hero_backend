@@ -17,6 +17,8 @@ import {
 } from '../service/characterImageService.js';
 import { PHOTO_DIR } from '../constants/index.js';
 import { env } from '../utils/env.js';
+import cloudinary from 'cloudinary';
+
 // import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
@@ -177,36 +179,48 @@ export const updateCharacterAvatarController = async (req, res) => {
 };
 
 const extractPublicId = (url) => {
-  const parts = url.split('/');
-  return parts[parts.length - 1].split('.')[0];
+  const matches = url.match(/\/([^/]+)\.\w+$/); // Убрали обратный слеш перед косой чертой
+  return matches ? matches[1] : null; // Возвращает только идентификатор
 };
 
 export const removeCharacterAvatarController = async (req, res) => {
   try {
-    const character = await Character.findById(req.params.id);
+    const characterId = req.params.id; // Убедитесь, что ID извлекается правильно
+
+    if (!characterId) {
+      return res.status(400).json({ error: 'Character ID is required.' });
+    }
+
+    console.log('Fetching character with ID:', characterId); // Логирование ID
+    const character = await Character.findById(characterId);
+
     if (!character) {
       return res.status(404).json({ error: 'Character not found!' });
     }
 
     const avatarUrl = character.avatarUrl;
 
+    if (!avatarUrl) {
+      return res.status(400).json({ error: 'Avatar URL is empty!' });
+    }
+
+    // Удаление аватара
     if (process.env.ENABLE_CLOUDINARY === 'true') {
-      const publicId = extractPublicId(avatarUrl);
-      await uploadToCloudinary(publicId);
+      const publicId = extractPublicId(avatarUrl); // Извлекаем public_id из URL
+      await cloudinary.v2.uploader.destroy(publicId); // Удаляем аватар из Cloudinary
     } else {
-      const localPath = path.resolve(
-        'src',
-        'uploads',
-        'photos',
-        avatarUrl.split('/').pop(),
-      );
+      const localPath = path.resolve(PHOTO_DIR, avatarUrl.split('/').pop());
       await fs.unlink(localPath).catch((err) => {
-        console.error(`Error deleting file ${err}`);
+        console.error(`Error deleting file: ${err}`); // Логирование ошибок
       });
     }
-    await Character.findByIdAndUpdate(req.params.id, { avatarUrl: null });
+
+    // Удаление URL аватара из базы данных
+    await Character.findByIdAndUpdate(characterId, { avatarUrl: null });
+
     res.status(200).json({ message: 'Avatar deleted successfully!' });
   } catch (err) {
+    console.error('Failed to delete avatar:', err);
     res.status(500).json({ error: err.message });
   }
 };
