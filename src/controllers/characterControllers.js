@@ -8,13 +8,15 @@ import {
   getAllCharacters,
   getCharacterById,
   updateCharacter,
+  // updateCharacter,
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
 import {
   changeCharacterImages,
   handleImageUpload,
 } from '../service/characterImageService.js';
-import { AVATAR_DIR } from '../constants/index.js';
+import { PHOTO_DIR } from '../constants/index.js';
+// import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
 export const getAllCharactersController = async (req, res) => {
@@ -109,28 +111,36 @@ export const updateCharacterController = async (req, res) => {
 
 //update character avatar controller
 export const updateCharacterAvatarController = async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded.' });
-  }
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded.' });
+    }
 
-  if (process.env.ENABLE_CLOUDINARY === 'true') {
-    const response = await uploadToCloudinary(req.file.path);
-    await fs.unlink(req.file.path);
-    await changeCharacterAvatar(req.params.id, response.secure_url);
-  } else {
-    const localPath = path.resolve(AVATAR_DIR, req.file.filename);
-    await fs.rename(req.file.path, localPath);
-    await changeCharacterAvatar(
-      req.params.id,
-      `http://localhost:3000/avatars/${req.file.filename}`,
-    );
-  }
+    if (process.env.ENABLE_CLOUDINARY === 'true') {
+      const response = await uploadToCloudinary(req.file.path);
+      await fs.unlink(req.file.path);
+      await changeCharacterAvatar(req.params.id, response.secure_url);
+    } else {
+      const localPath = path.resolve(PHOTO_DIR, req.file.filename);
+      await fs.rename(req.file.path, localPath);
 
-  res.send({
-    status: 200,
-    message: 'Avatar changed successfully!',
-    url: `http://localhost:3000/avatars/${req.file.filename}`,
-  });
+      console.log(`File saved to ${localPath}`);
+
+      await changeCharacterAvatar(
+        req.params.id,
+        `http://localhost:3000/uploads/photos/${req.file.filename}`,
+      );
+    }
+
+    res.send({
+      status: 200,
+      message: 'Avatar changed successfully!',
+      url: `http://localhost:3000/uploads/photos/${req.file.filename}`,
+    });
+  } catch (error) {
+    console.error('Error updating avatar:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 };
 
 const extractPublicId = (url) => {

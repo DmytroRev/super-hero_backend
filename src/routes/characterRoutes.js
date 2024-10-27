@@ -20,21 +20,25 @@ router.get('/', ctrlWrapper(getAllCharactersController));
 
 router.get('/:id', ctrlWrapper(getCharacterByIdController));
 
-router.post(
-  '/',
-  jsonParser,
-  ctrlWrapper(createCharacterController),
-);
+router.post('/', jsonParser, ctrlWrapper(createCharacterController));
 
 router.patch('/:id', jsonParser, ctrlWrapper(updateCharacterController));
 
-router.patch('/:id/avatar',  upload.single('avatar'), jsonParser, ctrlWrapper(updateCharacterAvatarController));
+router.patch(
+  '/:id/avatar',
+  upload.single('avatar'),
+  jsonParser,
+  ctrlWrapper(updateCharacterAvatarController),
+);
 
 router.delete('/:id/avatar', ctrlWrapper(removeCharacterAvatarController));
 
-
-router.post('/:id/image', upload.array('images'), jsonParser, ctrlWrapper(addCharacterImagesController));
-
+router.post(
+  '/:id/image',
+  upload.array('images'),
+  jsonParser,
+  ctrlWrapper(addCharacterImagesController),
+);
 
 router.delete('/:id/image', ctrlWrapper(removeCharacterImageController));
 
