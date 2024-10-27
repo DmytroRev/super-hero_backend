@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const characterSchema = new mongoose.Schema(
   {
-    avatar: { type: String },
+    avatarUrl: { type: String },
     nickname: { type: String, required: true },
     real_name: { type: String, required: true },
     origin_description: { type: String, required: true },

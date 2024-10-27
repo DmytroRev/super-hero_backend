@@ -16,6 +16,7 @@ import {
   handleImageUpload,
 } from '../service/characterImageService.js';
 import { PHOTO_DIR } from '../constants/index.js';
+import { env } from '../utils/env.js';
 // import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
@@ -116,26 +117,30 @@ export const updateCharacterAvatarController = async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
 
-    if (process.env.ENABLE_CLOUDINARY === 'true') {
-      const response = await uploadToCloudinary(req.file.path);
-      await fs.unlink(req.file.path);
-      await changeCharacterAvatar(req.params.id, response.secure_url);
+    let avatarUrl;
+    const filePath = req.file.path;
+
+    if (env('ENABLE_CLOUDINARY') === 'true') {
+      const response = await uploadToCloudinary(filePath); // передаем только путь
+      // await fs.unlink(req.file.path);
+      // await changeCharacterAvatar(req.params.id, response.secure_url);
+      avatarUrl = response.secure_url; // Получаем URL из ответа Cloudinary
     } else {
       const localPath = path.resolve(PHOTO_DIR, req.file.filename);
       await fs.rename(req.file.path, localPath);
+      avatarUrl = `http://localhost:3000/uploads/photos/${req.file.filename}`;
 
-      console.log(`File saved to ${localPath}`);
-
-      await changeCharacterAvatar(
-        req.params.id,
-        `http://localhost:3000/uploads/photos/${req.file.filename}`,
-      );
+      // await changeCharacterAvatar(
+      //   req.params.id,
+      //   `http://localhost:3000/uploads/photos/${req.file.filename}`,
+      // );
     }
+    await changeCharacterAvatar(req.params.id, avatarUrl);
 
     res.send({
       status: 200,
       message: 'Avatar changed successfully!',
-      url: `http://localhost:3000/uploads/photos/${req.file.filename}`,
+      url: avatarUrl,
     });
   } catch (error) {
     console.error('Error updating avatar:', error);

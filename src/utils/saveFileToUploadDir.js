@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { PHOTO_DIR, TMP_UPLOAD_DIR } from '../constants';
+import { PHOTO_DIR, TMP_UPLOAD_DIR } from '../constants/index.js';
 export const saveFileToUploadDir = async (file) => {
   const targetPath = path.join(PHOTO_DIR, file.filename);
 

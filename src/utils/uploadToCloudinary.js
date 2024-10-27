@@ -14,8 +14,8 @@ cloudinary.v2.config({
 
 // export {uploadToCloudinary};
 
-export const uploadToCloudinary = async (file) => {
-  const response = await cloudinary.v2.uploader.upload(file.path);
-  await fs.unlink(file.path);
-  return response.secure_url;
+export const uploadToCloudinary = async (filePath) => {
+  const response = await cloudinary.v2.uploader.upload(filePath); // response содержит secure_url
+  await fs.unlink(filePath); // Удаляем временный файл после загрузки
+  return response; // Возвращаем объект ответа, включая secure_url
 };

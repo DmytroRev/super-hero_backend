@@ -37,7 +37,7 @@ export const updateCharacter = async (id, data, file) => {
   }
 
   if (file) {
-    character.avatar = `/uploads/photos/${file.filename}`;
+    character.avatarUrl = `/uploads/photos/${file.filename}`;
 
     const avatarPath = path.resolve(('src', 'uploads', file.filename));
     await fs.rename(file.path, avatarPath);
@@ -63,7 +63,11 @@ export const updateCharacter = async (id, data, file) => {
 };
 
 export const changeCharacterAvatar = async (userId, image) => {
-  return Character.findByIdAndUpdate(userId, { avatar: image }, { new: true });
+  return Character.findByIdAndUpdate(
+    userId,
+    { avatarUrl: image },
+    { new: true },
+  );
 };
 
 export const deleteCharacter = async (id) => {
@@ -72,8 +76,8 @@ export const deleteCharacter = async (id) => {
     throw new Error('Character not found!');
   }
 
-  if (character.avatar) {
-    const avatarPath = path.resolve('src', character.avatar);
+  if (character.avatarUrl) {
+    const avatarPath = path.resolve('src', character.avatarUrl);
     try {
       await fs.unlink(avatarPath);
     } catch (err) {
