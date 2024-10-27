@@ -57,36 +57,64 @@ export const getCharacterByIdController = async (req, res) => {
 //create a new character controller
 export const createCharacterController = async (req, res) => {
   try {
-    const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : null;
-    const imagesUrl = req.file ? `/uploads/images/${req.file.filename}` : null;
+    const {
+      nickname,
+      real_name,
+      origin_description,
+      superpowers,
+      catch_phrase,
+    } = req.body;
 
+    // Проверяем наличие обязательных полей
+    if (
+      !nickname ||
+      !real_name ||
+      !origin_description ||
+      !superpowers ||
+      !catch_phrase
+    ) {
+      return res.status(400).send({ error: 'All fields are required.' });
+    }
+
+    // Инициализация URL для аватара
+    let avatarUrl = null;
+
+    // Проверка наличия файла аватара
+    if (req.file) {
+      const filePath = req.file.path; // Путь к загруженному файлу
+
+      // Если включена загрузка в Cloudinary
+      if (env('ENABLE_CLOUDINARY') === 'true') {
+        const response = await uploadToCloudinary(filePath); // Загружаем файл в Cloudinary
+        avatarUrl = response.secure_url; // Получаем URL из ответа
+      } else {
+        // Локальное сохранение аватара
+        const localPath = path.resolve('uploads', 'avatars', req.file.filename);
+        await fs.rename(req.file.path, localPath); // Перемещение файла в папку
+        avatarUrl = `http://localhost:3000/uploads/avatars/${req.file.filename}`; // Создаем URL для локального файла
+      }
+    }
+
+    // Создаем нового персонажа
     const newCharacter = new Character({
       avatarUrl,
-      name: req.body.name,
-      nickname: req.body.nickname,
-      real_name: req.body.real_name,
-      origin_description: req.body.origin_description,
-      superpowers: req.body.superpowers,
-      catch_phrase: req.body.catch_phrase,
-      imagesUrl,
+      nickname,
+      real_name,
+      origin_description,
+      superpowers,
+      catch_phrase,
     });
+
+    // Сохраняем персонажа в базе данных
     await newCharacter.save();
 
-    if (req.file) {
-      const avatarPath = path.resolve(
-        'src',
-        'uploads',
-        'avatars',
-        req.file.filename,
-      );
-      await fs.rename(req.file.path, avatarPath);
-    }
     res.status(201).json({
       status: 201,
       message: 'Character created successfully!',
       data: newCharacter,
     });
   } catch (err) {
+    console.error('Error creating character:', err);
     res.status(500).send({ error: err.message });
   }
 };
@@ -169,7 +197,7 @@ export const removeCharacterAvatarController = async (req, res) => {
       const localPath = path.resolve(
         'src',
         'uploads',
-        'avatars',
+        'photos',
         avatarUrl.split('/').pop(),
       );
       await fs.unlink(localPath).catch((err) => {

@@ -20,7 +20,12 @@ router.get('/', ctrlWrapper(getAllCharactersController));
 
 router.get('/:id', ctrlWrapper(getCharacterByIdController));
 
-router.post('/', jsonParser, ctrlWrapper(createCharacterController));
+router.post(
+  '/',
+  upload.single('avatar'),
+  jsonParser,
+  ctrlWrapper(createCharacterController),
+);
 
 router.patch('/:id', jsonParser, ctrlWrapper(updateCharacterController));
 
