@@ -1,48 +1,40 @@
-import fs from 'fs/promises';
-import path from 'path';
-import Character from '../db/models/Character.js';
-import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
+// import fs from 'fs/promises';
+// import path from 'path';
+// import Character from '../db/models/Character.js';
+// import cloudinary from 'cloudinary';
+// import { PHOTO_DIR } from '../constants/index.js';
 
-export const localImagePath = (filename) => {
-  return path.resolve('src', 'uploads', 'images', filename);
-};
+// // Создаем путь для локального хранения, если понадобится
+// export const localImagePath = (filename) => {
+//   return path.resolve(PHOTO_DIR, filename);
+// };
 
-export const changeCharacterImages = async (
-  characterId,
-  imageUrls,
-  isRemove = false,
-) => {
-  const character = await Character.findById(characterId);
+// // Основная функция контроллера для добавления изображений
+// export const addCharacterImagesController = async (req, res) => {
+//   try {
+//     if (!req.files || req.files.length === 0) {
+//       return res.status(400).json({ error: 'No files uploaded' });
+//     }
 
-  if (!character) {
-    throw new Error('Character not found!');
-  }
+//     const imageUrls = await Promise.all(
+//       req.files.map(async (file) => {
+//         // Загружаем изображения на Cloudinary
+//         const result = await cloudinary.v2.uploader.upload(file.path);
+//         await fs.unlink(file.path); // Удаляем временные файлы
+//         return result.secure_url;
+//       }),
+//     );
 
-  if (isRemove) {
-    character.imageUrl = character.imageUrl.filter(
-      (url) => !imageUrls.includes(url),
-    );
-  } else {
-    imageUrls.forEach((url) => {
-      if (!character.imageUrl.includes(url)) {
-        character.imageUrl.push(url);
-      }
-    });
-  }
+//     // Добавляем ссылки изображений в массив персонажа
+//     const character = await Character.findByIdAndUpdate(
+//       req.params.id,
+//       { $push: { imageUrl: { $each: imageUrls } } },
+//       { new: true },
+//     );
 
-  await character.save();
-};
-
-export const handleImageUpload = async (file) => {
-  let secureUrl;
-
-  if (process.env.ENABLE_CLOUDINARY === 'true') {
-    secureUrl = await uploadToCloudinary(file);
-    await fs.unlink(file.path);
-  } else {
-    const localPath = localImagePath(file.filename);
-    await fs.rename(file.path, localPath);
-    secureUrl = `http://localhost:3000/image/${file.filename}`;
-  }
-  return secureUrl;
-};
+//     res.status(200).json({ character, urls: imageUrls });
+//   } catch (error) {
+//     console.error('Error adding images:', error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };

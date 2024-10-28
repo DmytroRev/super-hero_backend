@@ -11,13 +11,11 @@ import {
   // updateCharacter,
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
-import {
-  changeCharacterImages,
-  handleImageUpload,
-} from '../service/characterImageService.js';
+// import { changeCharacterImages } from '../service/characterImageService.js';
 import { PHOTO_DIR } from '../constants/index.js';
 import { env } from '../utils/env.js';
 import cloudinary from 'cloudinary';
+// import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
 
 // import { AVATAR_DIR } from '../constants/index.js';
 
@@ -228,16 +226,32 @@ export const removeCharacterAvatarController = async (req, res) => {
 //add character images array controller
 export const addCharacterImagesController = async (req, res) => {
   try {
+    // Проверяем, были ли загружены файлы
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
-    const imageUrls = await Promise.all(req.files.map(handleImageUpload));
-    await changeCharacterImages(req.params.id, imageUrls);
-    res.send({ status: 200, message: 'Images added successfully!' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    // Загружаем изображения на Cloudinary и получаем их URL
+    const imageUrls = await Promise.all(
+      req.files.map(async (file) => {
+        const response = await cloudinary.v2.uploader.upload(file.path);
+        await fs.unlink(file.path); // Удаляем временный файл после загрузки
+        return response.secure_url;
+      }),
+    );
+
+    // Находим персонажа и добавляем новые URL-адреса в массив изображений
+    const character = await Character.findByIdAndUpdate(
+      req.params.id,
+      { $push: { imageUrl: { $each: imageUrls } } }, // Добавляем URL-адреса к массиву
+      { new: true },
+    );
+
+    // Отправляем обновлённого персонажа и загруженные URL-адреса
+    res.status(200).json({ character, urls: imageUrls });
+  } catch (error) {
+    console.error('Error adding images:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

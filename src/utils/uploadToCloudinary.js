@@ -8,12 +8,6 @@ cloudinary.v2.config({
   api_secret: CLOUDINARY.API_SECRET,
 });
 
-// function uploadToCloudinary(filePath) {
-// return cloudinary.uploader.upload(filePath);
-// };
-
-// export {uploadToCloudinary};
-
 export const uploadToCloudinary = async (filePath) => {
   const response = await cloudinary.v2.uploader.upload(filePath); // response содержит secure_url
   await fs.unlink(filePath); // Удаляем временный файл после загрузки

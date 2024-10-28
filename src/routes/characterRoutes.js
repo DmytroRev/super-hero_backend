@@ -38,9 +38,9 @@ router.patch(
 
 router.delete('/:id/avatar', ctrlWrapper(removeCharacterAvatarController));
 
-router.post(
+router.patch(
   '/:id/image',
-  upload.array('images'),
+  upload.array('image'),
   jsonParser,
   ctrlWrapper(addCharacterImagesController),
 );

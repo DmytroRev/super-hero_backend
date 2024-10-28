@@ -3,7 +3,7 @@ import { env } from '../utils/env.js';
 
 export const PHOTO_DIR = path.join(process.cwd(), 'src', 'uploads', 'photos');
 // export const IMAGE_DIR = path.join(process.cwd(), 'src', 'uploads', 'images');
-export const TMP_UPLOAD_DIR = path.join(process.cwd(), 'tmp');
+export const TMP_UPLOAD_DIR = path.join(process.cwd(), 'src', 'tmp');
 
 export const CLOUDINARY = {
   CLOUD_NAME: env('CLOUD_NAME'),
