@@ -3,21 +3,16 @@ import * as fs from 'node:fs/promises';
 import path from 'node:path';
 import {
   changeCharacterAvatar,
-  // changeCharacterImages,
   deleteCharacter,
+  deleteCharacterImage,
   getAllCharacters,
   getCharacterById,
   updateCharacter,
-  // updateCharacter,
 } from '../service/characterService.js';
 import { uploadToCloudinary } from '../utils/uploadToCloudinary.js';
-// import { changeCharacterImages } from '../service/characterImageService.js';
 import { PHOTO_DIR } from '../constants/index.js';
 import { env } from '../utils/env.js';
 import cloudinary from 'cloudinary';
-// import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
-
-// import { AVATAR_DIR } from '../constants/index.js';
 
 //get all character controller
 export const getAllCharactersController = async (req, res) => {
@@ -258,14 +253,17 @@ export const addCharacterImagesController = async (req, res) => {
 //add delete image character controller
 export const removeCharacterImageController = async (req, res) => {
   try {
-    const { imagesUrl } = req.body;
+    const { imageUrl } = req.body;
     const characterId = req.params.id;
 
-    await changeCharacterImages(characterId, imagesUrl, true);
-
-    res.send({ status: 200, message: 'Image removed successfully!' });
+    const deleteImage = await deleteCharacterImage(characterId, imageUrl, true);
+    res.send({
+      status: 200,
+      message: 'Image delete successfully!',
+      imageUrl: deleteImage,
+    });
   } catch (err) {
-    console.error(err);
+    console.error('Error in removeCharacterController:', err);
     res.status(500).json({ error: err.message });
   }
 };

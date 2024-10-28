@@ -70,6 +70,31 @@ export const changeCharacterAvatar = async (userId, image) => {
   );
 };
 
+export const deleteCharacterImage = async (
+  characterId,
+  imageUrl,
+  remove = false,
+) => {
+  try {
+    const character = await Character.findById(characterId);
+    if (!character) {
+      throw new Error('Image not found!');
+    }
+
+    if (remove) {
+      character.imageUrl = character.imageUrl.filter((url) => url !== imageUrl);
+    } else {
+      character.imageUrl.push(imageUrl);
+    }
+
+    await character.save();
+
+    return character.imageUrl;
+  } catch (err) {
+    throw new Error('Error delete character image:', err);
+  }
+};
+
 export const deleteCharacter = async (id) => {
   const character = await Character.findById(id);
   if (!character) {
