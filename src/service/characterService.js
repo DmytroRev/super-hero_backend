@@ -2,7 +2,7 @@ import Character from '../db/models/Character.js';
 import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 import path from 'path';
 import * as fs from 'fs/promises';
-
+import cloudinary from 'cloudinary';
 export const getAllCharacters = async ({ page = 1, perPage = 5 }) => {
   const limit = perPage;
   const skip = (page - 1) * perPage;
@@ -95,27 +95,29 @@ export const deleteCharacterImage = async (
   }
 };
 
-export const deleteCharacter = async (id) => {
+export const deleteCharacter = async (id, avatarPublicId, imagesPublicIds) => {
   const character = await Character.findById(id);
   if (!character) {
     throw new Error('Character not found!');
   }
 
-  if (character.avatarUrl) {
-    const avatarPath = path.resolve('src', character.avatarUrl);
+  // Удаление аватара из Cloudinary
+  if (avatarPublicId) {
     try {
-      await fs.unlink(avatarPath);
+      await cloudinary.v2.uploader.destroy(avatarPublicId); // Удаляем аватар
     } catch (err) {
-      console.error('Error deleting avatar:', err.message);
+      console.error('Error deleting avatar from Cloudinary:', err.message);
     }
   }
 
-  if (character.imageUrl) {
-    const imagesPath = path.resolve('src', character.imageUrl);
-    try {
-      await fs.unlink(imagesPath);
-    } catch (err) {
-      console.error('Error deleting images:', err.message);
+  // Удаление изображений из Cloudinary
+  for (const publicId of imagesPublicIds) {
+    if (publicId) {
+      try {
+        await cloudinary.v2.uploader.destroy(publicId); // Удаляем изображения
+      } catch (err) {
+        console.error('Error deleting image from Cloudinary:', err.message);
+      }
     }
   }
 

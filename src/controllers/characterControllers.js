@@ -271,13 +271,30 @@ export const removeCharacterImageController = async (req, res) => {
 //delete character controller
 export const deleteCharacterController = async (req, res) => {
   const { id } = req.params;
+  console.log('Character ID received:', id); // Отладка
+
   try {
-    const result = await deleteCharacter(id);
+    // Найдем персонажа по ID
+    const character = await Character.findById(id);
+    if (!character) {
+      return res.status(404).json({ message: 'Character not found!' });
+    }
+
+    // Извлечем publicId для аватара и изображений
+    const avatarPublicId = extractPublicId(character.avatarUrl);
+    const imagesPublicIds = character.imageUrl.map((url) =>
+      extractPublicId(url),
+    );
+
+    // Передаем все необходимые параметры в deleteCharacter
+    const result = await deleteCharacter(id, avatarPublicId, imagesPublicIds);
     res.status(200).json({
       status: 200,
       message: result.message,
     });
   } catch (err) {
+    console.error('Error deleting character:', err); // Логирование ошибок
+
     if (err.message === 'Character not found') {
       return res.status(404).json({ message: err.message });
     }
