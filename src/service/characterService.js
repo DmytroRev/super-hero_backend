@@ -104,19 +104,21 @@ export const deleteCharacter = async (id, avatarPublicId, imagesPublicIds) => {
   // Удаление аватара из Cloudinary
   if (avatarPublicId) {
     try {
-      await cloudinary.v2.uploader.destroy(avatarPublicId); // Удаляем аватар
+      await cloudinary.v2.uploader.destroy(avatarPublicId);
     } catch (err) {
       console.error('Error deleting avatar from Cloudinary:', err.message);
     }
   }
 
   // Удаление изображений из Cloudinary
-  for (const publicId of imagesPublicIds) {
-    if (publicId) {
-      try {
-        await cloudinary.v2.uploader.destroy(publicId); // Удаляем изображения
-      } catch (err) {
-        console.error('Error deleting image from Cloudinary:', err.message);
+  if (imagesPublicIds && imagesPublicIds.length > 0) {
+    for (const publicId of imagesPublicIds) {
+      if (publicId) {
+        try {
+          await cloudinary.v2.uploader.destroy(publicId);
+        } catch (err) {
+          console.error('Error deleting image from Cloudinary:', err.message);
+        }
       }
     }
   }

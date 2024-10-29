@@ -145,18 +145,11 @@ export const updateCharacterAvatarController = async (req, res) => {
 
     if (env('ENABLE_CLOUDINARY') === 'true') {
       const response = await uploadToCloudinary(filePath); // передаем только путь
-      // await fs.unlink(req.file.path);
-      // await changeCharacterAvatar(req.params.id, response.secure_url);
       avatarUrl = response.secure_url; // Получаем URL из ответа Cloudinary
     } else {
       const localPath = path.resolve(PHOTO_DIR, req.file.filename);
       await fs.rename(req.file.path, localPath);
       avatarUrl = `http://localhost:3000/uploads/photos/${req.file.filename}`;
-
-      // await changeCharacterAvatar(
-      //   req.params.id,
-      //   `http://localhost:3000/uploads/photos/${req.file.filename}`,
-      // );
     }
     await changeCharacterAvatar(req.params.id, avatarUrl);
 
@@ -172,19 +165,18 @@ export const updateCharacterAvatarController = async (req, res) => {
 };
 
 const extractPublicId = (url) => {
-  const matches = url.match(/\/([^/]+)\.\w+$/); // Убрали обратный слеш перед косой чертой
+  const matches = url.match(/\/([^/]+)\.\w+$/);
   return matches ? matches[1] : null; // Возвращает только идентификатор
 };
 
 export const removeCharacterAvatarController = async (req, res) => {
   try {
-    const characterId = req.params.id; // Убедитесь, что ID извлекается правильно
+    const characterId = req.params.id;
 
     if (!characterId) {
       return res.status(400).json({ error: 'Character ID is required.' });
     }
 
-    console.log('Fetching character with ID:', characterId); // Логирование ID
     const character = await Character.findById(characterId);
 
     if (!character) {
@@ -204,7 +196,7 @@ export const removeCharacterAvatarController = async (req, res) => {
     } else {
       const localPath = path.resolve(PHOTO_DIR, avatarUrl.split('/').pop());
       await fs.unlink(localPath).catch((err) => {
-        console.error(`Error deleting file: ${err}`); // Логирование ошибок
+        console.error(`Error deleting file: ${err}`);
       });
     }
 
@@ -280,11 +272,13 @@ export const deleteCharacterController = async (req, res) => {
       return res.status(404).json({ message: 'Character not found!' });
     }
 
-    // Извлечем publicId для аватара и изображений
-    const avatarPublicId = extractPublicId(character.avatarUrl);
-    const imagesPublicIds = character.imageUrl.map((url) =>
-      extractPublicId(url),
-    );
+    // Извлечем publicId для аватара и изображений, если они существуют
+    const avatarPublicId = character.avatarUrl
+      ? extractPublicId(character.avatarUrl)
+      : null;
+    const imagesPublicIds = character.imageUrl
+      ? character.imageUrl.map((url) => extractPublicId(url))
+      : [];
 
     // Передаем все необходимые параметры в deleteCharacter
     const result = await deleteCharacter(id, avatarPublicId, imagesPublicIds);
